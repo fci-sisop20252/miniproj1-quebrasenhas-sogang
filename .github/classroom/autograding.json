@@ -1,0 +1,124 @@
+{
+  "tests": [
+    {
+      "name": "Compilação - Mini-Projeto 1",
+      "setup": "make clean",
+      "run": "make all",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 30,
+      "points": 10
+    },
+    {
+      "name": "Biblioteca MD5 - Fornecida e Funcionando",
+      "setup": "make test_hash",
+      "run": "./test_hash abc",
+      "input": "",
+      "output": "900150983cd24fb0d6963f7d28e17f72",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 5
+    },
+    {
+      "name": "Funcionalidade Básica - Senha 'abc'",
+      "setup": "make all && rm -f password_found.txt",
+      "run": "./coordinator 900150983cd24fb0d6963f7d28e17f72 3 abc 2",
+      "input": "",
+      "output": "Senha: abc",
+      "comparison": "regex",
+      "timeout": 30,
+      "points": 15
+    },
+    {
+      "name": "Senha Numérica - '123'",
+      "setup": "rm -f password_found.txt",
+      "run": "./coordinator 202cb962ac59075b964b07152d234b70 3 0123456789 4",
+      "input": "",
+      "output": "Senha: 123",
+      "comparison": "regex",
+      "timeout": 30,
+      "points": 15
+    },
+    {
+      "name": "Arquivo de Resultado - Formato Correto",
+      "setup": "rm -f password_found.txt",
+      "run": "./coordinator 900150983cd24fb0d6963f7d28e17f72 3 abc 2 && cat password_found.txt",
+      "input": "",
+      "output": "^[0-9]+:abc$",
+      "comparison": "regex",
+      "timeout": 30,
+      "points": 10
+    },
+    {
+      "name": "Teste com Worker Único",
+      "setup": "rm -f password_found.txt",
+      "run": "./coordinator 900150983cd24fb0d6963f7d28e17f72 3 abc 1",
+      "input": "",
+      "output": "Senha: abc",
+      "comparison": "regex",
+      "timeout": 30,
+      "points": 10
+    },
+    {
+      "name": "Verificação System Calls - fork",
+      "setup": "",
+      "run": "grep -n 'fork()' src/coordinator.c",
+      "input": "",
+      "output": "fork",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 5
+    },
+    {
+      "name": "Verificação System Calls - execl",
+      "setup": "",
+      "run": "grep -n 'execl(' src/coordinator.c",
+      "input": "",
+      "output": "execl",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 5
+    },
+    {
+      "name": "Verificação System Calls - wait",
+      "setup": "",
+      "run": "grep -n 'wait(' src/coordinator.c",
+      "input": "",
+      "output": "wait",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 5
+    },
+    {
+      "name": "Senha Não Encontrada - Tratamento Correto",
+      "setup": "rm -f password_found.txt",
+      "run": "./coordinator hash_inexistente 2 ab 2",
+      "input": "",
+      "output": "não encontrada",
+      "comparison": "included",
+      "timeout": 20,
+      "points": 5
+    },
+    {
+      "name": "Validação de Argumentos",
+      "setup": "",
+      "run": "./coordinator",
+      "input": "",
+      "output": "Uso:|Usage:",
+      "comparison": "regex",
+      "timeout": 5,
+      "points": 5
+    },
+    {
+      "name": "Teste de Performance - Múltiplos Workers",
+      "setup": "rm -f password_found.txt",
+      "run": "timeout 60s ./coordinator 5d41402abc4b2a76b9719d911017c592 5 abcdefghijklmnopqrstuvwxyz 4",
+      "input": "",
+      "output": "Senha: hello",
+      "comparison": "regex",
+      "timeout": 65,
+      "points": 10
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+=== Exemplo de Saídas Esperadas ===
+
+Este arquivo mostra exemplos das saídas esperadas para diferentes execuções do programa.
+
+## 1. Execução Básica - Senha "abc"
+
+$ ./coordinator "900150983cd24fb0d6963f7d28e17f72" 3 "abc" 2
+
+=== Quebra de Senhas Paralela ===
+Hash alvo: 900150983cd24fb0d6963f7d28e17f72
+Tamanho da senha: 3
+Charset: abc (tamanho: 3)
+Número de workers: 2
+Espaço de busca total: 27 combinações
+
+Iniciando workers...
+  Worker 0 (PID 12345): aaa até acb (14 senhas)
+  Worker 1 (PID 12346): acc até ccc (13 senhas)
+
+Todos os workers foram iniciados. Aguardando conclusão...
+[Worker 0] Iniciado: aaa até acb
+[Worker 1] Iniciado: acc até ccc
+[Worker 0] ✓✓✓ SENHA ENCONTRADA: abc
+[Worker 0] ✓ Senha encontrada e salva: abc
+[Worker 1] Parando - senha já foi encontrada por outro worker
+Worker 0 (PID 12345) terminou com código 0
+Worker 1 (PID 12346) terminou com código 0
+
+=== Resultado ===
+✓ Senha encontrada!
+  Senha: abc
+  Hash: 900150983cd24fb0d6963f7d28e17f72
+  Encontrada pelo Worker 0
+  Verificação: ✓ Hash corresponde!
+
+=== Estatísticas ===
+Tempo total: 0.02 segundos
+Senhas verificadas: 27
+Taxa: 1350 senhas/segundo
+
+## 2. Execução com Senha Numérica - "123"
+
+$ ./coordinator "202cb962ac59075b964b07152d234b70" 3 "0123456789" 4
+
+=== Quebra de Senhas Paralela ===
+Hash alvo: 202cb962ac59075b964b07152d234b70
+Tamanho da senha: 3
+Charset: 0123456789 (tamanho: 10)
+Número de workers: 4
+Espaço de busca total: 1000 combinações
+
+Iniciando workers...
+  Worker 0 (PID 12347): 000 até 249 (250 senhas)
+  Worker 1 (PID 12348): 250 até 499 (250 senhas)
+  Worker 2 (PID 12349): 500 até 749 (250 senhas)
+  Worker 3 (PID 12350): 750 até 999 (250 senhas)
+
+Todos os workers foram iniciados. Aguardando conclusão...
+[Worker 0] Iniciado: 000 até 249
+[Worker 0] Progresso: 100000 senhas verificadas (500000/s) - atual: 123
+[Worker 0] ✓✓✓ SENHA ENCONTRADA: 123
+[Worker 0] ✓ Senha encontrada e salva: 123
+Worker 0 (PID 12347) terminou com código 0
+[Worker 1] Parando - senha já foi encontrada por outro worker
+Worker 1 (PID 12348) terminou com código 0
+[Worker 2] Parando - senha já foi encontrada por outro worker
+Worker 2 (PID 12349) terminou com código 0
+[Worker 3] Parando - senha já foi encontrada por outro worker
+Worker 3 (PID 12350) terminou com código 0
+
+=== Resultado ===
+✓ Senha encontrada!
+  Senha: 123
+  Hash: 202cb962ac59075b964b07152d234b70
+  Encontrada pelo Worker 0
+  Verificação: ✓ Hash corresponde!
+
+=== Estatísticas ===
+Tempo total: 0.25 segundos
+Senhas verificadas: 1000
+Taxa: 4000 senhas/segundo
+
+## 3. Senha Não Encontrada
+
+$ ./coordinator "hash_inexistente" 2 "ab" 2
+
+=== Quebra de Senhas Paralela ===
+Hash alvo: hash_inexistente
+Tamanho da senha: 2
+Charset: ab (tamanho: 2)
+Número de workers: 2
+Espaço de busca total: 4 combinações
+
+Iniciando workers...
+  Worker 0 (PID 12351): aa até ab (2 senhas)
+  Worker 1 (PID 12352): ba até bb (2 senhas)
+
+Todos os workers foram iniciados. Aguardando conclusão...
+[Worker 0] Iniciado: aa até ab
+[Worker 1] Iniciado: ba até bb
+[Worker 0] Intervalo completo. 2 senhas verificadas.
+[Worker 1] Intervalo completo. 2 senhas verificadas.
+Worker 0 (PID 12351) terminou com código 0
+Worker 1 (PID 12352) terminou com código 0
+
+=== Resultado ===
+✗ Senha não encontrada no espaço de busca especificado.
+  Verifique se o hash está correto e se o charset contém todos os caracteres.
+
+=== Estatísticas ===
+Tempo total: 0.01 segundos
+Senhas verificadas: 4
+Taxa: 400 senhas/segundo
+
+## 4. Execução com Um Worker Apenas
+
+$ ./coordinator "900150983cd24fb0d6963f7d28e17f72" 3 "abc" 1
+
+=== Quebra de Senhas Paralela ===
+Hash alvo: 900150983cd24fb0d6963f7d28e17f72
+Tamanho da senha: 3
+Charset: abc (tamanho: 3)
+Número de workers: 1
+Espaço de busca total: 27 combinações
+
+Iniciando workers...
+  Worker 0 (PID 12353): aaa até ccc (27 senhas)
+
+Todos os workers foram iniciados. Aguardando conclusão...
+[Worker 0] Iniciado: aaa até ccc
+[Worker 0] ✓✓✓ SENHA ENCONTRADA: abc
+Worker 0 (PID 12353) terminou com código 0
+
+=== Resultado ===
+✓ Senha encontrada!
+  Senha: abc
+  Hash: 900150983cd24fb0d6963f7d28e17f72
+  Encontrada pelo Worker 0
+  Verificação: ✓ Hash corresponde!
+
+=== Estatísticas ===
+Tempo total: 0.01 segundos
+Senhas verificadas: 27
+Taxa: 2700 senhas/segundo
+
+## 5. Formato do Arquivo password_found.txt
+
+Quando uma senha é encontrada, o arquivo contém:
+
+worker_id:senha
+
+Exemplos:
+- 0:abc
+- 2:hello
+- 1:123
+
+## 6. Mensagens de Erro Comuns
+
+### Argumentos Insuficientes:
+$ ./coordinator
+Uso: ./coordinator <hash_md5> <tamanho> <charset> <num_workers>
+Exemplo: ./coordinator 900150983cd24fb0d6963f7d28e17f72 3 abc 4
+
+### Tamanho Inválido:
+$ ./coordinator "hash" 0 "abc" 2
+Erro: Tamanho da senha deve estar entre 1 e 10
+
+### Muitos Workers:
+$ ./coordinator "hash" 3 "abc" 20
+Erro: Número de workers deve estar entre 1 e 16
+
+### Charset Vazio:
+$ ./coordinator "hash" 3 "" 2
+Erro: Conjunto de caracteres não pode ser vazio
+
+## 7. Progress Messages (Workers com execução mais longa)
+
+Durante execuções longas, workers podem mostrar progresso:
+
+[Worker 2] Progresso: 100000 senhas verificadas (45000/s) - atual: hello
+[Worker 1] Progresso: 200000 senhas verificadas (50000/s) - atual: world
+
+## 8. Finalização de Workers
+
+[Worker 0] Finalizado. Total: 125000 senhas em 2.50 segundos (50000 senhas/s)
+[Worker 1] Finalizado. Total: 200000 senhas em 4.00 segundos (50000 senhas/s)
+[Worker 2] Finalizado. Total: 75000 senhas em 1.50 segundos (50000 senhas/s)
