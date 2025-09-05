@@ -233,50 +233,37 @@ int main(int argc, char *argv[]) {
     
     printf("\n=== Resultado ===\n");
     
-    // TODO 9: Verificar se algum worker encontrou a senha
-    // Ler o arquivo password_found.txt se existir
-    
-    // IMPLEMENTE AQUI:
-    FILE *result_file = fopen(RESULT_FILE, "r");
-    if (result_file != NULL) {
-        char line[256];
-        if (fgets(line, sizeof(line), result_file)) {
-            // Fazer parse do formato "worker_id:password"
-            char *colon = strchr(line, ':');
-            if (colon != NULL) {
-                *colon = '\0';
-                char *worker_id = line;
-                char *found_password = colon + 1;
-                
-                // Remover nova linha se existir
-                char *newline = strchr(found_password, '\n');
-                if (newline != NULL) *newline = '\0';
-                
-                // Verificar o hash usando md5_string()
-                char *calculated_hash = md5_string(found_password);
-                if (calculated_hash != NULL && strcmp(calculated_hash, target_hash) == 0) {
-                    printf("✅ SENHA ENCONTRADA pelo worker %s: %s\n", worker_id, found_password);
-                    printf("Hash verificado: %s\n", calculated_hash);
-                } else {
-                    printf("❌ Falso positivo detectado: %s\n", found_password);
-                }
-                free(calculated_hash);
+// TODO 9: Verificar se algum worker encontrou a senha
+// Ler o arquivo password_found.txt se existir
+
+// IMPLEMENTE AQUI:
+FILE *result_file = fopen(RESULT_FILE, "r");
+if (result_file != NULL) {
+    char line[256];
+    if (fgets(line, sizeof(line), result_file)) {
+        // Fazer parse do formato "worker_id:password"
+        char *colon = strchr(line, ':');
+        if (colon != NULL) {
+            *colon = '\0';
+            char *worker_id = line;
+            char *found_password = colon + 1;
+            
+            // Remover nova linha se existir
+            char *newline = strchr(found_password, '\n');
+            if (newline != NULL) *newline = '\0';
+            
+            // Verificar o hash usando md5_string() - FORMA CORRETA
+            char calculated_hash[33];
+            md5_string(found_password, calculated_hash);
+            
+            if (strcmp(calculated_hash, target_hash) == 0) {
+                printf("✅ SENHA ENCONTRADA pelo worker %s: %s\n", worker_id, found_password);
+                printf("Hash verificado: %s\n", calculated_hash);
+            } else {
+                printf("❌ Falso positivo detectado: %s\n", found_password);
             }
+            // NÃO PRECISA DE free() - calculated_hash é array local
         }
-        fclose(result_file);
-    } else if (workers_found_password > 0) {
-        printf("❌ Workers relataram sucesso mas arquivo de resultado não encontrado\n");
-    } else {
-        printf("❌ Senha não encontrada no espaço de busca\n");
     }
-    
-    // Estatísticas finais (opcional)
-    // TODO: Calcular e exibir estatísticas de performance
-    printf("\n=== Estatísticas ===\n");
-    printf("Tempo total de execução: %.2f segundos\n", elapsed_time);
-    printf("Taxa média: %.2f combinações/segundo\n", total_space / elapsed_time);
-    printf("Workers que completaram: %d/%d\n", workers_completed, num_workers);
-    printf("Workers que encontraram a senha: %d\n", workers_found_password);
-    
-    return 0;
+    fclose(result_file);
 }
