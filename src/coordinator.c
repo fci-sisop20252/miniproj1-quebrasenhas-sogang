@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
                    i, start_password, end_password, end_index - start_index + 1);
             
             execl("./worker", "./worker", target_hash, 
-                  start_idx_str, end_idx_str, charset, argv[2], worker_id, NULL);
+                  start_password, end_password, charset, argv[2], worker_id, NULL);
             
             // Se execl falhar
             perror("Erro ao executar worker");
