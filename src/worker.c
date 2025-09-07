@@ -159,10 +159,12 @@ int main(int argc, char *argv[]) {
         // Se encontrou: salvar resultado e terminar
         
         if (strcmp(computed_hash, target_hash) == 0) {
-        printf("[Worker %d] SENHA ENCONTRADA: %s\n", worker_id, current_password);
-        save_result(worker_id, current_password);
-        return 2; // Código de sucesso
-    }
+            printf("[Worker %d] SENHA ENCONTRADA: %s\n", worker_id, current_password);
+            save_result(worker_id, current_password);
+            return 2; // Código de sucesso
+        }
+        
+        passwords_checked++;
 
         // TODO 6: Incrementar para a próxima senha
         // DICA: Use a função increment_password implementada acima
@@ -178,7 +180,7 @@ int main(int argc, char *argv[]) {
             break; // Não conseguiu incrementar (fim do espaço)
         }
         
-        passwords_checked++;
+        
     }
     
     // Estatísticas finais
