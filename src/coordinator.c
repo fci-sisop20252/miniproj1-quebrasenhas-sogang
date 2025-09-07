@@ -120,20 +120,19 @@ int main(int argc, char *argv[]) {
     
     for (int i = 0; i < num_workers; i++) {
         // Calcular intervalo de senhas para este worker
-        long long start_index = i * passwords_per_worker;
-        long long end_index = start_index + passwords_per_worker - 1;
-    
-        if (i < remaining) {
-            end_index++;  
+        long long start_index = (i * total_space) / num_workers;
+        long long end_index = ((i + 1) * total_space) / num_workers - 1;
+
+        if (i == num_workers - 1) {
+            end_index = total_space - 1;
         }
-    
-        if (i >= remaining) {
-            start_index += remaining;
-            end_index += remaining;
-        }
-    
+
+        // Garantir que não ultrapassa os limites (segurança extra)
         if (end_index >= total_space) {
             end_index = total_space - 1;
+        }
+        if (start_index >= total_space) {
+            start_index = total_space - 1;
         }
         
         // Converter indices para senhas de inicio e fim
