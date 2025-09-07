@@ -122,14 +122,18 @@ int main(int argc, char *argv[]) {
         // Calcular intervalo de senhas para este worker
         long long start_index = i * passwords_per_worker;
         long long end_index = start_index + passwords_per_worker - 1;
-        
-        // Distribuir o resto entre os primeiros workers
+    
         if (i < remaining) {
-            start_index += i;
-            end_index += i + 1;
-        } else {
+            end_index++;  
+        }
+    
+        if (i >= remaining) {
             start_index += remaining;
             end_index += remaining;
+        }
+    
+        if (end_index >= total_space) {
+            end_index = total_space - 1;
         }
         
         // Converter indices para senhas de inicio e fim
@@ -258,5 +262,6 @@ int main(int argc, char *argv[]) {
     printf("Workers que completaram: %d/%d\n", workers_completed, num_workers);
     printf("Workers que encontraram a senha: %d\n", workers_found_password);
     
+    while (wait(NULL) > 0);
     return 0;
 }
