@@ -120,21 +120,11 @@ int main(int argc, char *argv[]) {
     
     for (int i = 0; i < num_workers; i++) {
         // Calcular intervalo de senhas para este worker
-        long long start_index = (i * total_space) / num_workers;
-        long long end_index = ((i + 1) * total_space) / num_workers - 1;
+        long long start_index = i * passwords_per_worker;
+        long long end_index = (i == num_workers - 1) ? 
+                             (start_index + passwords_per_worker + remaining - 1) : 
+                             (start_index + passwords_per_worker - 1);
 
-        if (i == num_workers - 1) {
-            end_index = total_space - 1;
-        }
-
-        // Garantir que não ultrapassa os limites (segurança extra)
-        if (end_index >= total_space) {
-            end_index = total_space - 1;
-        }
-        if (start_index >= total_space) {
-            start_index = total_space - 1;
-        }
-        
         // Converter indices para senhas de inicio e fim
         char start_password[password_len + 1];
         char end_password[password_len + 1];
@@ -182,30 +172,30 @@ int main(int argc, char *argv[]) {
     int workers_completed = 0;
     int workers_found_password = 0;
     
-    while (workers_completed < num_workers) {
+    for (int i = 0; i < num_workers; i++) {
         int status;
         pid_t finished_pid = wait(&status);
         
         if (finished_pid == -1) {
             perror("Erro ao aguardar processo filho");
-            break;
+            continue;
         }
         
         // Identificar qual worker terminou
-        for (int i = 0; i < num_workers; i++) {
-            if (workers[i] == finished_pid) {
+        for (int j = 0; j < num_workers; j++) {
+            if (workers[j] == finished_pid) {
                 if (WIFEXITED(status)) {
                     int exit_code = WEXITSTATUS(status);
                     if (exit_code == 0) {
-                        printf("Worker %d terminou com sucesso\n", i);
+                        printf("Worker %d terminou com sucesso\n", j);
                     } else if (exit_code == 2) {
-                        printf("Worker %d encontrou a senha!\n", i);
+                        printf("Worker %d encontrou a senha!\n", j);
                         workers_found_password++;
                     } else {
-                        printf("Worker %d terminou com código de erro %d\n", i, exit_code);
+                        printf("Worker %d terminou com código de erro %d\n", j, exit_code);
                     }
                 } else if (WIFSIGNALED(status)) {
-                    printf("Worker %d terminou devido ao sinal %d\n", i, WTERMSIG(status));
+                    printf("Worker %d terminou devido ao sinal %d\n", j, WTERMSIG(status));
                 }
                 workers_completed++;
                 break;
@@ -224,18 +214,18 @@ int main(int argc, char *argv[]) {
     if (result_file != NULL) {
         char line[256];
         if (fgets(line, sizeof(line), result_file)) {
-            // Fazer parse do formato "worker_id:password"
+            
             char *colon = strchr(line, ':');
             if (colon != NULL) {
                 *colon = '\0';
                 char *worker_id = line;
                 char *found_password = colon + 1;
                 
-                // Remover nova linha se existir
+                
                 char *newline = strchr(found_password, '\n');
                 if (newline != NULL) *newline = '\0';
                 
-                // Verificar o hash usando md5_string()
+                
                 char calculated_hash[33];
                 md5_string(found_password, calculated_hash);
                 
@@ -254,13 +244,19 @@ int main(int argc, char *argv[]) {
         printf("❌ Senha não encontrada no espaço de busca\n");
     }
     
-    // Estatísticas finais
     printf("\n=== Estatísticas ===\n");
     printf("Tempo total de execução: %.2f segundos\n", elapsed_time);
-    printf("Taxa média: %.2f combinações/segundo\n", total_space / elapsed_time);
+    if (elapsed_time > 0) {
+        printf("Taxa média: %.2f combinações/segundo\n", total_space / elapsed_time);
+    } else {
+        printf("Taxa média: infinito combinações/segundo\n");
+    }
     printf("Workers que completaram: %d/%d\n", workers_completed, num_workers);
     printf("Workers que encontraram a senha: %d\n", workers_found_password);
     
-    while (wait(NULL) > 0);
+    int child_status;
+    while (waitpid(-1, &child_status, WNOHANG) > 0) {
+    }
+    
     return 0;
 }
