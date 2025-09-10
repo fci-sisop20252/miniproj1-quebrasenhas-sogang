@@ -9,29 +9,9 @@
 #include <errno.h>
 #include "hash_utils.h"
 
-/**
- * PROCESSO COORDENADOR - Mini-Projeto 1: Quebra de Senhas Paralelo
- * 
- * Este programa coordena múltiplos workers para quebrar senhas MD5 em paralelo.
- * O MD5 JÁ ESTÁ IMPLEMENTADO - você deve focar na paralelização (fork/exec/wait).
- * 
- * Uso: ./coordinator <hash_md5> <tamanho> <charset> <num_workers>
- * 
- * Exemplo: ./coordinator "900150983cd24fb0d6963f7d28e17f72" 3 "abc" 4
- * 
- * SEU TRABALHO: Implementar os TODOs marcados abaixo
- */
-
 #define MAX_WORKERS 16
 #define RESULT_FILE "password_found.txt"
 
-/**
- * Calcula o tamanho total do espaço de busca
- * 
- * @param charset_len Tamanho do conjunto de caracteres
- * @param password_len Comprimento da senha
- * @return Número total de combinações possíveis
- */
 long long calculate_search_space(int charset_len, int password_len) {
     long long total = 1;
     for (int i = 0; i < password_len; i++) {
@@ -40,16 +20,6 @@ long long calculate_search_space(int charset_len, int password_len) {
     return total;
 }
 
-/**
- * Converte um índice numérico para uma senha
- * Usado para definir os limites de cada worker
- * 
- * @param index Índice numérico da senha
- * @param charset Conjunto de caracteres
- * @param charset_len Tamanho do conjunto
- * @param password_len Comprimento da senha
- * @param output Buffer para armazenar a senha gerada
- */
 void index_to_password(long long index, const char *charset, int charset_len, 
                        int password_len, char *output) {
     for (int i = password_len - 1; i >= 0; i--) {
@@ -59,25 +29,19 @@ void index_to_password(long long index, const char *charset, int charset_len,
     output[password_len] = '\0';
 }
 
-/**
- * Função principal do coordenador
- */
 int main(int argc, char *argv[]) {
-    // TODO 1: Validar argumentos de entrada
     if (argc != 5) {
         fprintf(stderr, "Uso: %s <hash_md5> <tamanho> <charset> <num_workers>\n", argv[0]);
         fprintf(stderr, "Exemplo: %s \"900150983cd24fb0d6963f7d28e17f72\" 3 \"abc\" 4\n", argv[0]);
         return 1;
     }
     
-
     const char *target_hash = argv[1];
     int password_len = atoi(argv[2]);
     const char *charset = argv[3];
     int num_workers = atoi(argv[4]);
     int charset_len = strlen(charset);
     
-
     if (password_len < 1 || password_len > 10) {
         fprintf(stderr, "Erro: Tamanho da senha deve estar entre 1 e 10\n");
         return 1;
@@ -99,32 +63,25 @@ int main(int argc, char *argv[]) {
     printf("Charset: %s (tamanho: %d)\n", charset, charset_len);
     printf("Número de workers: %d\n", num_workers);
     
-
     long long total_space = calculate_search_space(charset_len, password_len);
     printf("Espaço de busca total: %lld combinações\n\n", total_space);
     
-
     unlink(RESULT_FILE);
     
     time_t start_time = time(NULL);
     
-    // TODO 2: Dividir o espaço de busca entre os workers
     long long passwords_per_worker = total_space / num_workers;
     long long remaining = total_space % num_workers;
     
-
     pid_t workers[MAX_WORKERS];
     
-    // TODO 3: Criar os processos workers usando fork()
     printf("Iniciando workers...\n");
     
     for (int i = 0; i < num_workers; i++) {
-
         long long start_index = i * passwords_per_worker;
         long long end_index = (i == num_workers - 1) ? 
                              (start_index + passwords_per_worker + remaining - 1) : 
                              (start_index + passwords_per_worker - 1);
-
 
         char start_password[password_len + 1];
         char end_password[password_len + 1];
@@ -132,7 +89,6 @@ int main(int argc, char *argv[]) {
         index_to_password(start_index, charset, charset_len, password_len, start_password);
         index_to_password(end_index, charset, charset_len, password_len, end_password);
         
-
         pid_t pid = fork();
         
         if (pid == -1) {
@@ -141,7 +97,6 @@ int main(int argc, char *argv[]) {
         }
         
         if (pid == 0) {
-
             char worker_id[10];
             snprintf(worker_id, sizeof(worker_id), "%d", i);
             
@@ -156,11 +111,9 @@ int main(int argc, char *argv[]) {
             execl("./worker", "./worker", target_hash, 
                   start_password, end_password, charset, argv[2], worker_id, NULL);
             
-
             perror("Erro ao executar worker");
             exit(1);
         } else {
-
             workers[i] = pid;
             printf("Worker %d iniciado com PID %d\n", i, pid);
         }
@@ -168,14 +121,13 @@ int main(int argc, char *argv[]) {
     
     printf("\nTodos os workers foram iniciados. Aguardando conclusão...\n");
     
-    // TODO 8: Aguardar todos os workers terminarem usando wait()
     int workers_completed = 0;
     int workers_found_password = 0;
     int status;
     pid_t finished_pid;
 
     for (int i = 0; i < num_workers; i++) {
-        if (workers[i] > 0) {  
+        if (workers[i] > 0) {
             finished_pid = waitpid(workers[i], &status, 0);
         
             if (finished_pid == -1) {
@@ -200,36 +152,29 @@ int main(int argc, char *argv[]) {
         }
     }
 
-while ((finished_pid = waitpid(-1, &status, WNOHANG)) > 0) {
-    printf("Processo filho residual %d limpo\n", finished_pid);
-}
+    while ((finished_pid = waitpid(-1, &status, 0)) > 0) {}
 
+    if (finished_pid == -1 && errno != ECHILD) {
+        perror("Erro na limpeza final de processos");
+    }
 
-if (finished_pid == -1 && errno != ECHILD) {
-    perror("Erro na limpeza final de processos");
-}
-
-time_t end_time = time(NULL);
+    time_t end_time = time(NULL);
     double elapsed_time = difftime(end_time, start_time);
     
     printf("\n=== Resultado ===\n");
     
-    // TODO 9: Verificar se algum worker encontrou a senha
     FILE *result_file = fopen(RESULT_FILE, "r");
     if (result_file != NULL) {
         char line[256];
         if (fgets(line, sizeof(line), result_file)) {
-            
             char *colon = strchr(line, ':');
             if (colon != NULL) {
                 *colon = '\0';
                 char *worker_id = line;
                 char *found_password = colon + 1;
                 
-                
                 char *newline = strchr(found_password, '\n');
                 if (newline != NULL) *newline = '\0';
-                
                 
                 char calculated_hash[33];
                 md5_string(found_password, calculated_hash);
