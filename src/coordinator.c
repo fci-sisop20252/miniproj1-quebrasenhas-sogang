@@ -171,43 +171,45 @@ int main(int argc, char *argv[]) {
     // TODO 8: Aguardar todos os workers terminarem usando wait()
     int workers_completed = 0;
     int workers_found_password = 0;
+    int status;
+    pid_t finished_pid;
+
     for (int i = 0; i < num_workers; i++) {
-        int status;
-        pid_t finished_pid = wait(&status);
+        if (workers[i] > 0) {  
+            finished_pid = waitpid(workers[i], &status, 0);
         
-        if (finished_pid == -1) {
-            if (errno == ECHILD) {
-                break;
+            if (finished_pid == -1) {
+                perror("Erro ao aguardar processo filho específico");
+                continue;
             }
-            perror("Erro ao aguardar processo filho");
-            continue;
-        }
         
-        for (int j = 0; j < num_workers; j++) {
-            if (workers[j] == finished_pid) {
-                if (WIFEXITED(status)) {
-                    int exit_code = WEXITSTATUS(status);
-                    if (exit_code == 0) {
-                        printf("Worker %d terminou com sucesso\n", j);
-                    } else if (exit_code == 2) {
-                        printf("Worker %d encontrou a senha!\n", j);
-                        workers_found_password++;
-                    } else {
-                        printf("Worker %d terminou com código de erro %d\n", j, exit_code);
-                    }
-                } else if (WIFSIGNALED(status)) {
-                    printf("Worker %d terminou devido ao sinal %d\n", j, WTERMSIG(status));
+            if (WIFEXITED(status)) {
+                int exit_code = WEXITSTATUS(status);
+                if (exit_code == 0) {
+                    printf("Worker %d terminou com sucesso\n", i);
+                } else if (exit_code == 2) {
+                    printf("Worker %d encontrou a senha!\n", i);
+                    workers_found_password++;
+                } else {
+                    printf("Worker %d terminou com código de erro %d\n", i, exit_code);
                 }
-                workers_completed++;
-                break;
+            } else if (WIFSIGNALED(status)) {
+                printf("Worker %d terminou devido ao sinal %d\n", i, WTERMSIG(status));
             }
+            workers_completed++;
         }
     }
 
-    while (waitpid(-1, NULL, WNOHANG) > 0) {
-    }
-    
-    time_t end_time = time(NULL);
+while ((finished_pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    printf("Processo filho residual %d limpo\n", finished_pid);
+}
+
+
+if (finished_pid == -1 && errno != ECHILD) {
+    perror("Erro na limpeza final de processos");
+}
+
+time_t end_time = time(NULL);
     double elapsed_time = difftime(end_time, start_time);
     
     printf("\n=== Resultado ===\n");
