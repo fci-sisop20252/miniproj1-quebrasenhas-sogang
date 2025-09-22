@@ -1,9 +1,18 @@
 # Relatório: Mini-Projeto 1 - Quebra-Senhas Paralelo
 
-**Aluno(s):** Rafael Lima 10425819 
+**Aluno(s):** 
+Rafael Lima 
+RA: 10425819
+
 Caio Henrique 
-Lendy Nayara 
+RA: 10425408
+
+Lendy Naiara 
+RA:
+
 Guilherme Castro
+RA: 10427775
+
 ---
 
 ## 1. Estratégia de Paralelização
